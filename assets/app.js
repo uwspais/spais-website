@@ -1,0 +1,29 @@
+'use strict';
+
+const menuButton=document.querySelector('.menu-button');
+const navLinks=document.querySelector('.nav-links');
+function closeMenu(){if(!menuButton)return;menuButton.setAttribute('aria-expanded','false');menuButton.setAttribute('aria-label','Open navigation');navLinks.classList.remove('open');}
+menuButton?.addEventListener('click',()=>{const open=menuButton.getAttribute('aria-expanded')!=='true';menuButton.setAttribute('aria-expanded',String(open));menuButton.setAttribute('aria-label',open?'Close navigation':'Open navigation');navLinks.classList.toggle('open',open);});
+navLinks?.querySelectorAll('a').forEach(a=>a.addEventListener('click',closeMenu));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu();});
+
+const tabs=[...document.querySelectorAll('[role="tab"]')];
+function activateTab(tab,focus=false){tabs.forEach(t=>{const active=t===tab;t.setAttribute('aria-selected',String(active));t.tabIndex=active?0:-1;document.getElementById(t.getAttribute('aria-controls')).hidden=!active;});if(focus)tab.focus();}
+tabs.forEach((tab,i)=>{tab.addEventListener('click',()=>activateTab(tab));tab.addEventListener('keydown',e=>{let n;if(e.key==='ArrowRight')n=(i+1)%tabs.length;else if(e.key==='ArrowLeft')n=(i-1+tabs.length)%tabs.length;else if(e.key==='Home')n=0;else if(e.key==='End')n=tabs.length-1;else return;e.preventDefault();activateTab(tabs[n],true);});});
+document.querySelectorAll('[data-join-tab]').forEach(link=>link.addEventListener('click',()=>{const t=document.getElementById('tab-'+link.dataset.joinTab);if(t)activateTab(t);}));
+if(location.hash==='#growers'||location.hash==='#partners'){const t=document.getElementById('tab-'+location.hash.slice(1));if(t){activateTab(t);requestAnimationFrame(()=>document.getElementById('join').scrollIntoView());}}
+
+document.querySelector('.copy-btn')?.addEventListener('click',async e=>{const button=e.currentTarget;const status=document.querySelector('.copy-status');try{await navigator.clipboard.writeText('uwspais@gmail.com');status.textContent='Email copied';button.textContent='Copied ✓';setTimeout(()=>{status.textContent='';const b=document.querySelector('.copy-btn');if(b)b.textContent='Copy email';},3000);}catch{status.textContent='Email: uwspais@gmail.com';}});
+
+const albums={
+ team:{title:"The SPAIS community",source:null,photos:[["team-cover.jpg","SPAIS members and guests together in front of the society’s presentation screen."]]},
+ farm:{title:'Learning from the people who grow our food',source:'https://www.linkedin.com/posts/sustainable-physical-ai-society_spais-uwaterloo-agriculture-activity-7520692352848445440-BVLp',photos:[['farm-1.jpg','SPAIS members together during the visit to Hoffman’s Strawberries.'],['farm-2.jpg','SPAIS members listening to their farm host beside a growing bed.'],['farm-3.jpg','The team learning outdoors among autumn trees at Hoffman’s Strawberries.'],['farm-4.jpg','The SPAIS team exploring farm equipment inside a barn.'],['farm-5.jpg','The team learning about sheep care during the farm visit.']]},
+ orientation:{title:'Finding your people. Building your next idea.',source:'https://www.linkedin.com/posts/sustainable-physical-ai-society_physicalai-robotics-universityofwaterloo-activity-7513852475918036992-ZcqV',photos:[['orientation-1.jpg','SPAIS members gathered in a classroom for the term orientation.'],['orientation-2.jpg','Students listening during the SPAIS term orientation.'],['orientation-3.jpg','A presenter introducing SPAIS projects to students.'],['orientation-4.jpg','A team lead explaining the design team’s work.'],['orientation-5.jpg','A discussion at the SPAIS term orientation.']]},
+ upside:{title:'Physical AI, out in the world',source:'https://www.linkedin.com/posts/sustainable-physical-ai-society_physicalai-agriculturalrobotics-precisionagriculture-activity-7499169989447340032-wa6H',photos:[['upside-1.jpg','SPAIS members learning about an Upside Robotics agricultural robot during a company visit.'],['upside-2.jpg','SPAIS visitors and their hosts at Upside Robotics.']]}
+};
+const dialog=document.querySelector('.gallery-dialog');
+let activeAlbum,photoIndex=0,returnFocus;
+function renderPhoto(){if(!activeAlbum)return;const photo=activeAlbum.photos[photoIndex];const im=dialog.querySelector('.gallery-image');im.src='assets/'+photo[0];im.alt=photo[1];dialog.querySelector('.gallery-title').textContent=activeAlbum.title;dialog.querySelector('.gallery-count').textContent=`${photoIndex+1} / ${activeAlbum.photos.length}`;const source=dialog.querySelector('.gallery-source');source.hidden=!activeAlbum.source;if(activeAlbum.source)source.href=activeAlbum.source;dialog.querySelector('[data-prev]').disabled=activeAlbum.photos.length<2;dialog.querySelector('[data-next]').disabled=activeAlbum.photos.length<2;}
+document.querySelectorAll('[data-gallery]').forEach(b=>b.addEventListener('click',()=>{activeAlbum=albums[b.dataset.gallery];if(!activeAlbum||!dialog)return;photoIndex=Number(b.dataset.photo||0);returnFocus=b;renderPhoto();dialog.showModal();document.body.classList.add('modal-open');}));
+function stepPhoto(step){photoIndex=(photoIndex+step+activeAlbum.photos.length)%activeAlbum.photos.length;renderPhoto();}
+if(dialog){dialog.querySelector('.gallery-close').addEventListener('click',()=>dialog.close());dialog.querySelector('[data-prev]').addEventListener('click',()=>stepPhoto(-1));dialog.querySelector('[data-next]').addEventListener('click',()=>stepPhoto(1));dialog.addEventListener('keydown',e=>{if(e.key==='ArrowRight'){e.preventDefault();stepPhoto(1);}if(e.key==='ArrowLeft'){e.preventDefault();stepPhoto(-1);}});dialog.addEventListener('click',e=>{if(e.target===dialog){const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)dialog.close();}});dialog.addEventListener('close',()=>{document.body.classList.remove('modal-open');returnFocus?.focus();});}
